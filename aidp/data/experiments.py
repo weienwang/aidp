@@ -55,6 +55,9 @@ class DataExperiment(ABC):
             # Write report of the results
             training_output, validation_output = self.report_writer.write_report(trainer.classifier.best_estimator_, trainer.X_train, trainer.Y_train, trainer.X_test, trainer.Y_test)
             
+            # make a group list
+            master_outcome_grp.append(grouping.key)
+
             # make a data list
             combined_data = list(itertools.chain.from_iterable([training_output, validation_output]))           
            
@@ -69,11 +72,11 @@ class DataExperiment(ABC):
         # save the master outcome
         Group_df = pd.DataFrame({'Group':master_outcome_grp})
         master_outcome_num_df = pd.concat(master_outcome_num, ignore_index=True)
-          
+   
         # column bind x            
         master_outcome_num_bigdataframe = pd.concat([Group_df, master_outcome_num_df], axis=1, ignore_index=True)
-
-        filepath = pathlib.Path(__file__).parent.parent.parent / model_key+'_Training_Performance.csv'
+        parent_path=str(pathlib.Path(__file__).parent.parent.parent)
+        filepath = parent_path + "/" + str(model_key) + '_Training_Performance.csv'
         master_outcome_num_bigdataframe.to_csv(filepath, header= ['Group', 'recall_t', 'precision_t', 'auc_t', 'specificity_t', 
             'npv_t', 'accuracy_t', 'weighted_sensitivity_t', 'weighted_ppv_t', 'weighted_specificity_t' ,
             'weighted_npv_t', 'weighted_accuracy_t', 'recall_v', 'precision_v', 'auc_v', 'specificity_v', 
