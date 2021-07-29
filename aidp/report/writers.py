@@ -22,15 +22,18 @@ class LogReportWriter():
     def write_report(self, model, x_train, y_train, x_test, y_test):
         self._logger.info("")
         self._logger.info("--TRAINING METRICS--")
+        training_output = []
+        validation_output = []
         for metric in self._scoring_list:
             score = self._scoring_list[metric](model, x_train, y_train)
             self._logger.info("%s\t%s" %(metric, score))
-       
+            training_output.append(score)
         self._logger.info("")
         self._logger.info("--VALIDATION METRICS--")
         for metric in self._scoring_list:            
             score = self._scoring_list[metric](model, x_test, y_test)
             self._logger.info("%s\t%s" %(metric, score))
-       
+            validation_output.append(score)
         self._logger.info("")
+        return training_output, validation_output
         
