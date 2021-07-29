@@ -10,6 +10,7 @@ import pandas as pd
 from aidp.data.groupings import ParkinsonsVsControlGrouping, MsaPspVsPdGrouping, MsaVsPdPspGrouping, PspVsPdMsaGrouping, PspVsMsaGrouping
 from aidp.ml.predictors import Predictor, LinearSvcPredictor
 from aidp.report.writers import LogReportWriter
+import itertools
 
 class DataExperiment(ABC):
     key = None
@@ -42,18 +43,43 @@ class DataExperiment(ABC):
         self._logger.info("Starting model training")
         #TODO: Implement Training mechanism
         filtered_data = self.filter_data(data)
+
+        master_outcome_num = []	
+        master_outcome_grp = []	
+
         for grouping in self.groupings:
             grouping.group_data(filtered_data).grouped_data
             self._logger.debug("Training model for grouping: %s", grouping.key)
             trainer = LinearSvcPredictor()
             trainer.train_model(grouping.grouped_data) 
             # Write report of the results
-            self.report_writer.write_report(trainer.classifier.best_estimator_, trainer.X_train, trainer.Y_train, trainer.X_test, trainer.Y_test)
+            training_output, validation_output = self.report_writer.write_report(trainer.classifier.best_estimator_, trainer.X_train, trainer.Y_train, trainer.X_test, trainer.Y_test)
+            
+            # make a data list
+            combined_data = list(itertools.chain.from_iterable([training_output, validation_output]))           
+           
+            # make it to small datafram and transpose
+            smalldataframe = pd.DataFrame(combined_data)
 
+            # append small dataframs
+            master_outcome_num.append(smalldataframe.transpose())
             # Write model to pickle file
             if save_models:
                 trainer.save_model_to_file(self.key, grouping.key, model_key)
-             
+        # save the master outcome
+        Group_df = pd.DataFrame({'Group':master_outcome_grp})
+        master_outcome_num_df = pd.concat(master_outcome_num, ignore_index=True)
+          
+        # column bind x            
+        master_outcome_num_bigdataframe = pd.concat([Group_df, master_outcome_num_df], axis=1, ignore_index=True)
+
+        filepath = pathlib.Path(__file__).parent.parent.parent / model_key+'_Training_Performance.csv'
+        master_outcome_num_bigdataframe.to_csv(filepath, header= ['Group', 'recall_t', 'precision_t', 'auc_t', 'specificity_t', 
+            'npv_t', 'accuracy_t', 'weighted_sensitivity_t', 'weighted_ppv_t', 'weighted_specificity_t' ,
+            'weighted_npv_t', 'weighted_accuracy_t', 'recall_v', 'precision_v', 'auc_v', 'specificity_v', 
+            'npv_v', 'accuracy_v', 'weighted_sensitivity_v', 'weighted_ppv_v', 'weighted_specificity_v' ,
+            'weighted_npv_v', 'weighted_accuracy_v'])
+  
         self._logger.debug("Finished model training")       
 
     def get_results(self):
