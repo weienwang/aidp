@@ -44,5 +44,7 @@ You can optionally provide a model key (using  `--model_key=<key>`) when making 
 
 ### -------------------Wei-en Update--------------------
 (1) To avoid warnings, lower the numpy version from numpy==1.17.3 to numpy==1.16.4
+
 (2) Save training output
+
 (3) Modify output report
