@@ -27,7 +27,7 @@ class PredictionEngine(Engine):
     def start(self, model_key='default'):
         for experiment in self.experiments:
             self._logger.info("Starting prediction experiment: %s", experiment)
-            experiment.predict(self.model_data.data, model_key)
+            experiment.predict(self.model_data.data, model_key,)
             self._logger.debug("Finished prediction experiment: %s", experiment)
 
             results = experiment.get_results()

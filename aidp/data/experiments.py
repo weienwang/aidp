@@ -39,6 +39,7 @@ class DataExperiment(ABC):
             grouping.predictions = predictor.make_predictions(filtered_data)
         self._logger.info("Starting model prediction")
 
+
     def train(self, data, model_key, save_models=True):
         self._logger.info("Starting model training")
         #TODO: Implement Training mechanism
@@ -76,7 +77,7 @@ class DataExperiment(ABC):
         # column bind x            
         master_outcome_num_bigdataframe = pd.concat([Group_df, master_outcome_num_df], axis=1, ignore_index=True)
         parent_path=str(pathlib.Path(__file__).parent.parent.parent)
-        filepath = parent_path + "/" + str(model_key) + '_Training_Performance.csv'
+        filepath = parent_path + "/" + str(model_key) + '_' + str(self.key) + '_Training_Performance.csv'
         master_outcome_num_bigdataframe.to_csv(filepath, header= ['Group', 'recall_t', 'precision_t', 'auc_t', 'specificity_t', 
             'npv_t', 'accuracy_t', 'weighted_sensitivity_t', 'weighted_ppv_t', 'weighted_specificity_t' ,
             'weighted_npv_t', 'weighted_accuracy_t', 'recall_v', 'precision_v', 'auc_v', 'specificity_v', 
