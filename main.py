@@ -26,7 +26,7 @@ def main():
     # Get prediction/training engine
     engine = getEngine(args.cmd, model_data)
     engine.start(model_key=args.model_key)
-
+    engine.generate_report(model_key=args.model_key)
     logger.info("Ending AIDP Application")
 
 
