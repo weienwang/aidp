@@ -7,7 +7,8 @@ from datetime import datetime
 from aidp.data.modeldata import ModelData
 from aidp.data.reader import ExcelDataReader
 from aidp.runners.engines import getEngine
-
+from fpdf import FPDF
+import datetime
 
 def main():
     """ Parses the command line arguments and determines what to do """
@@ -26,7 +27,12 @@ def main():
     # Get prediction/training engine
     engine = getEngine(args.cmd, model_data)
     engine.start(model_key=args.model_key)
-    engine.generate_report(model_key=args.model_key)
+    engine.generate_report(model_key=args.model_key) # a bar graph with all the probablity 
+    engine.donut_chart('both_park_v_control (PD/MSA/PSP Probability)', 'PD · MSA · PSP', 'Control', 'Match')
+    engine.donut_chart('dmri_msa_psp_v_pd (MSA/PSP Probability)', 'PD', 'MSA · PSP','unmatch')
+    engine.donut_chart('dmri_psp_v_msa (PSP Probability)','MSA', 'PSP','unmatch')
+    engine.bar_chart()
+    engine.pdf_report()
     logger.info("Ending AIDP Application")
 
 
@@ -75,7 +81,7 @@ def parse_arguments():
                         action="store_true")
     parser_train.add_argument("--model_key", help="""(Optional) Name of the folder where the newly 
     trained will be stored (in /resources/models/<model_key>).  If no name is provided, a timestamp
-    is used""", default=datetime.now().strftime("%Y-%m-%d-%H%M%S%f"))
+    is used""", default=datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S%f"))
 
     return parser.parse_args()
 
