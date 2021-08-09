@@ -216,7 +216,7 @@ class PredictionEngine(Engine):
             combined = combined.reset_index()
             long_df=pd.melt(combined, id_vars='GroupID', value_vars=[ "pSN_FW", "Putamen_FW", "Cerebellar_SCP_FW", "Cerebellar_MCP_FW" ])
             stats=long_df.groupby(['GroupID', 'variable']).mean()
-            print(stats)
+        
           
             # set the matlab figure
             plt.figure(figsize=(7,3))
