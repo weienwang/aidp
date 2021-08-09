@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from fpdf import FPDF
 import datetime
+import numpy as np
 
 
 class Engine(ABC):
@@ -50,16 +51,19 @@ class PredictionEngine(Engine):
 
         parent_path=str(pathlib.Path(__file__).parent.parent.parent)
         new_filename = '%s_out.xlsx' %os.path.splitext(os.path.basename(self.model_data.filename))[-2]
+        title_name=os.path.splitext(os.path.basename(self.model_data.filename))[-2]
         in_table = pd.read_excel(parent_path + '/' + new_filename).drop('Unnamed: 0',axis=1)
         df1 =in_table.loc[:, 'both_park_v_control (PD/MSA/PSP Probability)':'clinical_psp_v_msa (PSP Probability)']
         df2=df1.transpose()
         df2['Matrics'] = df2.index
         df2 = df2.reset_index(drop=True)
         df2_new = df2.rename(columns={0: 'Value'})
-        df2_new.plot.bar(x="Matrics", y = "Value",title=new_filename)
-        output_dir =parent_path + '/output/'
-        plt.savefig(output_dir + '/' + new_filename, '/_Predict_result.png', bbox_inches='tight') 
+        df2_new.plot.bar(x="Matrics", y = "Value",title=title_name)
+        output_dir = parent_path + '/output/'
+        filepath= output_dir + str(title_name) + '_Predict_result.png'
+        plt.savefig(filepath , bbox_inches='tight') 
         plt.clf()
+
     
      # create a donut chart
     def donut_chart(self, test_prob, circle_title_1, circle_title_2, switch):       
@@ -169,6 +173,33 @@ class PredictionEngine(Engine):
         df = df.loc[df.GroupID == 0] 
         df_new =df[["GroupID", "pSN_FW", "Putamen_FW", "Cerebellar_SCP_FW", "Cerebellar_MCP_FW" ]]
         
+                # create bar label 
+        def add_percent(data):
+            if data > 0:
+                output = '+'+ str(round(data,1)*100) + '%'
+            else:
+                output =str(round(data,1)*100) + '%'
+            return output
+        
+
+        # show label on the bar
+        def show_values_on_bars(axs, h_v="v"):
+            def _show_on_single_plot(ax):
+                if h_v == "v":
+                    count = 0
+                    for p in ax.patches:
+                        _x = p.get_x() + p.get_width() / 2
+                        _y = p.get_y() + p.get_height() +0.04
+                        value = label[count]
+                        count+=1
+                        ax.text(_x, _y, value, ha="center", size = 12) 
+
+            if isinstance(axs, np.ndarray):
+                for idx, ax in np.ndenumerate(axs):
+                    _show_on_single_plot(ax)
+            else:
+                _show_on_single_plot(axs)
+
 
         for s in subject_ID_list:
         
@@ -176,7 +207,7 @@ class PredictionEngine(Engine):
                        
             # concat control and subject data 
             sub_data=true_sub_data.copy()
-            sub_data['GroupID'].iloc[0] = '0'
+            sub_data['GroupID'].iloc[0] = '1'
             sub_data =sub_data[['GroupID', "pSN_FW", "Putamen_FW", "Cerebellar_SCP_FW", "Cerebellar_MCP_FW" ]]
             combined=pd.concat([df_new, sub_data], axis=0, ignore_index=True)
 
@@ -184,7 +215,8 @@ class PredictionEngine(Engine):
             combined.set_index('GroupID')
             combined = combined.reset_index()
             long_df=pd.melt(combined, id_vars='GroupID', value_vars=[ "pSN_FW", "Putamen_FW", "Cerebellar_SCP_FW", "Cerebellar_MCP_FW" ])
-
+            stats=long_df.groupby(['GroupID', 'variable']).mean()
+            print(stats)
           
             # set the matlab figure
             plt.figure(figsize=(7,3))
@@ -202,8 +234,23 @@ class PredictionEngine(Engine):
             g.set_xticklabels(["pSN", "Putamen", "SCP" , "MCP"])
             g.set(xlabel='ROIs', ylabel='FW')
             plt.gca().set_prop_cycle(None)
+
+            #print(stats.loc[('1', 'Cerebellar_MCP_FW')].value)
+            #print(stats.loc[(0, 'Cerebellar_MCP_FW')].value)
+            # this is so interesting!!
+
+            Cerebellar_MCP_FW_dif=add_percent((stats.loc[('1', 'Cerebellar_MCP_FW')].value-stats.loc[(0, 'Cerebellar_MCP_FW')].value)/stats.loc[(0, 'Cerebellar_MCP_FW')].value)
+            Cerebellar_SCP_FW_dif=add_percent((stats.loc[('1', 'Cerebellar_SCP_FW')].value-stats.loc[(0, 'Cerebellar_SCP_FW')].value)/stats.loc[(0, 'Cerebellar_SCP_FW')].value)
+            Putamen_FW_dif=add_percent((stats.loc[('1', 'Putamen_FW')].value-stats.loc[(0, 'Putamen_FW')].value)/stats.loc[(0, 'Putamen_FW')].value)
+            pSN_FW_dif=add_percent((stats.loc[('1', 'pSN_FW')].value-stats.loc[(0, 'pSN_FW')].value)/stats.loc[(0, 'pSN_FW')].value)
+            label= ["", "", "", "", pSN_FW_dif, Putamen_FW_dif, Cerebellar_SCP_FW_dif,Cerebellar_MCP_FW_dif ]
+          
+    
+            show_values_on_bars(g, "v")
+
+
             filepath = output_dir + str(s) + '_FW_barplot.png'
-            plt.savefig(filepath ,orientation='landscape',transparent=True, bbox_inches='tight', pad_inches=0)
+            plt.savefig(filepath ,orientation='landscape',transparent=True, bbox_inches='tight', pad_inches=0, dpi=300)
             #plt.show()
             plt.clf()
     
@@ -222,6 +269,13 @@ class PredictionEngine(Engine):
             print(ID)
             Age=sub_data['Age'].iloc[0]
             Sex=sub_data['Sex'].iloc[0]
+
+            Sex=sub_data['Sex'].iloc[0]
+            if Sex == 0:
+                Sex_interp = 'Male'
+            else:
+                Sex_interp = 'Female'            
+
             UPDRS=sub_data['UPDRS'].iloc[0]   
 
 
@@ -243,11 +297,11 @@ class PredictionEngine(Engine):
             pdf.cell(25, 30, ID)
 
             pdf.set_xy(77, 50.5)
-            date_output=datetime.datetime.now().strftime("%Y-%m-%d")
+            date_output=datetime.datetime.now().strftime("%m-%d-%Y")
             pdf.cell(25, 30, date_output)
 
 
-            clinical='Age: '+str(Age) + '   Sex: '+ str(Sex) + '   UPDRS: ' + str(UPDRS)
+            clinical='Age: '+str(Age) + '   Sex: '+ str(Sex_interp) + '   UPDRS: ' + str(UPDRS)
             pdf.set_xy(77, 65)
             pdf.cell(25, 30, clinical)
 
