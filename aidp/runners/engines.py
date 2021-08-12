@@ -248,7 +248,7 @@ class PredictionEngine(Engine):
             label= ["", "", "", "", pSN_FW_dif, Putamen_FW_dif, Cerebellar_SCP_FW_dif,Cerebellar_MCP_FW_dif ]
           
     
-            #show_values_on_bars(g, "v")
+            show_values_on_bars(g, "v")
 
 
             filepath = output_dir + str(s) + '_FW_barplot.png'
