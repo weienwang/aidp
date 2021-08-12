@@ -63,6 +63,7 @@ class PredictionEngine(Engine):
         filepath= output_dir + str(title_name) + '_Predict_result.png'
         plt.savefig(filepath , bbox_inches='tight') 
         plt.clf()
+        plt.close('all')
 
     
      # create a donut chart
@@ -156,6 +157,7 @@ class PredictionEngine(Engine):
             filepath = output_dir + str(s) + '_' +str(circle_title_1) + 'vs' + str(circle_title_2) + '_prob.png'
             plt.savefig(filepath ,orientation='portrait',transparent=True, bbox_inches=None, pad_inches=0,dpi=300)
             plt.clf()
+            plt.close('all')
 
         #plt.savefig('fig2.png',orientation='portrait',transparent=True, bbox_inches=None, pad_inches=0)
 
@@ -246,13 +248,14 @@ class PredictionEngine(Engine):
             label= ["", "", "", "", pSN_FW_dif, Putamen_FW_dif, Cerebellar_SCP_FW_dif,Cerebellar_MCP_FW_dif ]
           
     
-            show_values_on_bars(g, "v")
+            #show_values_on_bars(g, "v")
 
 
             filepath = output_dir + str(s) + '_FW_barplot.png'
             plt.savefig(filepath ,orientation='landscape',transparent=True, bbox_inches='tight', pad_inches=0, dpi=300)
             #plt.show()
             plt.clf()
+            plt.close('all')
     
 
     def pdf_report(self):  
