@@ -310,6 +310,7 @@ class PredictionEngine(Engine):
 
             Sex=sub_data['Sex'].iloc[0]
             predicted_diagnosis=sub_data['Predicted_diagnosis'].iloc[0]
+
             if Sex == 0:
                 Sex_interp = 'Male'
             else:
@@ -317,54 +318,109 @@ class PredictionEngine(Engine):
 
             UPDRS=sub_data['UPDRS'].iloc[0]   
 
-
             pdf = FPDF('P', 'mm', 'Letter')
             pdf.add_page()
             pdf.set_font('Arial', '', 16)
             parent_path=str(pathlib.Path(__file__).parent.parent.parent) 
             output_dir=parent_path + '/output/'
             template_dir=parent_path + '/resources/'
-            print("Hello-1")
+
             #output_dir="c:\\users\\weienwang\\onedrive\\documents\\github\\aidp_BETA\\output\\"
             #template_dir="c:\\users\\weienwang\\onedrive\\documents\\github\\aidp_BETA\\resources\\"
-
-            #pdf.image(template_dir+"template_v2-600.png",x = 0, y = 0, w = 215.9, h = 279.4)
-            pdf.image(template_dir+"template-150_v2.png",x = 0, y = 0, w = 215.9, h = 279.4)
+            # select differnet report layout for different diagnosis
 
 
-            pdf.set_xy(82, 30)
-            pdf.cell(25, 30, ID)
-
-            pdf.set_xy(82, 43)
-            date_output=datetime.datetime.now().strftime("%m-%d-%Y")
-            pdf.cell(25, 30, date_output)
+            if predicted_diagnosis == 'PSP' or predicted_diagnosis == 'MSA':
+                
+                #pdf.image(template_dir+"template_v2-600.png",x = 0, y = 0, w = 215.9, h = 279.4)
+                pdf.image(template_dir+"template-150_v3.png",x = 0, y = 0, w = 215.9, h = 279.4)
 
 
-            clinical='Age: '+str(Age) + '   Sex: '+ str(Sex_interp) + '   UPDRS: ' + str(UPDRS)
-            pdf.set_xy(82, 58)
-            pdf.cell(25, 30, clinical)
+                pdf.set_xy(82, 30)
+                pdf.cell(25, 30, ID)
 
-            print("Hello-2")
-            filepath = output_dir + str(ID) + str('_PD · MSA · PSPvsControl_prob.png')
-            pdf.image(filepath,x = 145, y = 80.71, w =68.069, h = 51.052)
-            print("Hello-3")
-            filepath = output_dir + str(ID) +  str('_PDvsMSA · PSP_prob.png')
-            pdf.image(filepath,x = 145, y = 112.71, w = 68.069, h =51.052)
-
-            filepath = output_dir + str(ID) + str('_MSAvsPSP_prob.png')
-            pdf.image(filepath,x = 145, y = 144.71 , w = 68.069, h =51.052)
+                pdf.set_xy(82, 43)
+                date_output=datetime.datetime.now().strftime("%m-%d-%Y")
+                pdf.cell(25, 30, date_output)
 
 
-            filepath = output_dir + str(ID) + str('_FW_barplot.png')
-            pdf.image(filepath,x = 18.25, y = 215.4 , w = 111.040, h = 59.752)
+                clinical='Age: '+str(Age) + '   Sex: '+ str(Sex_interp) + '   UPDRS: ' + str(UPDRS)
+                pdf.set_xy(82, 56)
+                pdf.cell(25, 30, clinical)
 
-            pdf.set_xy(90, 170)
-            pdf.cell(25, 30, predicted_diagnosis)
+                filepath = output_dir + str(ID) + str('_PD · MSA · PSPvsControl_prob.png')
+                pdf.image(filepath,x = 145, y = 80.71, w =68.069, h = 51.052)
 
-            file_name=output_dir + str(ID) + '_Imaging_Report.pdf'
-            pdf.output(file_name, 'F')
-        
-        
+                filepath = output_dir + str(ID) +  str('_PDvsMSA · PSP_prob.png')
+                pdf.image(filepath,x = 145, y = 112.71, w = 68.069, h =51.052)
+
+                filepath = output_dir + str(ID) + str('_MSAvsPSP_prob.png')
+                pdf.image(filepath,x = 145, y = 144.71 , w = 68.069, h =51.052)
+
+
+                filepath = output_dir + str(ID) + str('_FW_barplot.png')
+                pdf.image(filepath,x = 15.25, y = 215.4 , w = 111.040, h = 55.728)
+
+                pdf.set_xy(88, 172)
+                pdf.cell(25, 30, predicted_diagnosis)
+
+                file_name=output_dir + str(ID) + '_Imaging_Report.pdf'
+                pdf.output(file_name, 'F')
+
+            elif predicted_diagnosis == 'PD':
+
+                pdf.image(template_dir+"template-150_v3_PD.png",x = 0, y = 0, w = 215.9, h = 279.4)
+                pdf.set_xy(82, 30)
+                pdf.cell(25, 30, ID)
+
+                pdf.set_xy(82, 43)
+                date_output=datetime.datetime.now().strftime("%m-%d-%Y")
+                pdf.cell(25, 30, date_output)
+
+                clinical='Age: '+str(Age) + '   Sex: '+ str(Sex_interp) + '   UPDRS: ' + str(UPDRS)
+                pdf.set_xy(82, 56)
+                pdf.cell(25, 30, clinical)
+
+                filepath = output_dir + str(ID) + str('_PD · MSA · PSPvsControl_prob.png')
+                pdf.image(filepath,x = 145, y = 80.71, w =68.069, h = 51.052)
+
+                filepath = output_dir + str(ID) +  str('_PDvsMSA · PSP_prob.png')
+                pdf.image(filepath,x = 145, y = 112.71, w = 68.069, h =51.052)
+
+                filepath = output_dir + str(ID) + str('_FW_barplot.png')
+                pdf.image(filepath,x = 15.25, y = 215.4 , w = 111.040, h = 55.728)
+
+                pdf.set_xy(88, 172)
+                pdf.cell(25, 30, predicted_diagnosis)
+
+                file_name=output_dir + str(ID) + '_Imaging_Report.pdf'
+                pdf.output(file_name, 'F')
+            else:
+
+                pdf.image(template_dir+"template-150_v3_Control.png",x = 0, y = 0, w = 215.9, h = 279.4)
+                pdf.set_xy(82, 30)
+                pdf.cell(25, 30, ID)
+
+                pdf.set_xy(82, 43)
+                date_output=datetime.datetime.now().strftime("%m-%d-%Y")
+                pdf.cell(25, 30, date_output)
+
+                clinical='Age: '+str(Age) + '   Sex: '+ str(Sex_interp) + '   UPDRS: ' + str(UPDRS)
+                pdf.set_xy(82, 56)
+                pdf.cell(25, 30, clinical)
+
+                filepath = output_dir + str(ID) + str('_PD · MSA · PSPvsControl_prob.png')
+                pdf.image(filepath,x = 145, y = 80.71, w =68.069, h = 51.052)
+
+                filepath = output_dir + str(ID) + str('_FW_barplot.png')
+                pdf.image(filepath,x = 15.25, y = 215.4 , w = 111.040, h = 55.728)
+                
+                pdf.set_xy(88, 172)
+                pdf.cell(25, 30, predicted_diagnosis)
+
+                file_name=output_dir + str(ID) + '_Imaging_Report.pdf'
+                pdf.output(file_name, 'F')
+
 class TrainingEngine(Engine):
     """Defines tasks that will be completed as part of the training workflow"""
     def start(self, model_key = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S%f")):
