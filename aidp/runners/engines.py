@@ -14,6 +14,12 @@ import seaborn as sns
 from fpdf import FPDF
 import datetime
 import numpy as np
+import smtplib, ssl
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import csv
 
 
 class Engine(ABC):
@@ -76,14 +82,12 @@ class PredictionEngine(Engine):
         output_dir=parent_path + '/output/'
         subject_ID_list=output_model_data['Subject']
         predicted_dignosis = []	
-        print("predicted diagnosis")
+       
 
         for s in subject_ID_list:
-            print("inside loop")
 
             # for PD
             sub_data=output_model_data.loc[output_model_data['Subject'] == s]
-            print(predicted_dignosis)
 
             if sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] < 0.5 :
                 predicted_dignosis.append('Not Parkinsonism')
@@ -108,8 +112,7 @@ class PredictionEngine(Engine):
         output_model_data = pd.read_excel(parent_path + '/' + new_filename).drop('Unnamed: 0',axis=1)
         output_dir=parent_path + '/output/'
         subject_ID_list=output_model_data['Subject']
-        #dignosis_report = []	
-
+        
 
         for s in subject_ID_list:
             sub_data=output_model_data.loc[output_model_data['Subject'] == s]
@@ -421,6 +424,121 @@ class PredictionEngine(Engine):
                 file_name=output_dir + str(ID) + '_Imaging_Report.pdf'
                 pdf.output(file_name, 'F')
 
+    def send_report(self, switch): 
+        
+        parent_path=str(pathlib.Path(__file__).parent.parent.parent) 
+        new_filename = '%s_out.xlsx' %os.path.splitext(os.path.basename(self.model_data.filename))[-2]
+        output_model_data = pd.read_excel(parent_path + '/' + new_filename).drop('Unnamed: 0',axis=1)
+        output_dir=parent_path + '\\output\\'
+        subject_ID_list=output_model_data['Subject']
+        if switch == '1':
+            print("sending")
+            for ID in subject_ID_list:
+
+                file_name=output_dir + str(ID) + '_Imaging_Report.pdf'
+                pdf_file_name = str(ID) + '_Imaging_Report.pdf'
+                # set up file and working directory
+                port = 465  # For SSL
+                #password = input("Type your password and press enter: ")
+                password='image502L1'
+                # read contacts 
+
+                with open("c:\\users\\weienwang\\onedrive\\documents\\github\\aidp_BETA\\sendemail\\"+"email_contacts.csv") as file:
+                    reader = csv.reader(file)
+                    next(reader)  # Skip header row
+                    for name, email in reader:
+                        print(f"Sending email to {name}")
+
+                        # Create a secure SSL context
+                        context = ssl.create_default_context()
+                        sender_email = "aidp.imaging@gmail.com"
+
+                        date_output=datetime.datetime.now().strftime("%m-%d-%Y")
+                        message = MIMEMultipart("alternative")
+                        message["Subject"] = 'AIDP Report-' + ID + '-'+ date_output
+                        message["From"] = "aidp.imaging@gmail.com"
+                        message["To"] = "weienwang@ufl.edu"
+
+                        # add attachement to the email
+                        # Open PDF file in binary mode
+                        with open(file_name, "rb") as attachment:
+                            # Add file as application/octet-stream
+                            # Email client can usually download this automatically as attachment
+                            part = MIMEBase("application", "octet-stream")
+                            part.set_payload(attachment.read())
+
+                        # Encode file in ASCII characters to send by email    
+                        encoders.encode_base64(part)
+
+                        # Add header as key/value pair to attachment part
+                        part.add_header(
+                            "Content-Disposition",
+                            f"attachment; filename= {pdf_file_name}",
+                        )
+
+                        # Add attachment to message and convert message to string
+                        message.attach(part)
+
+                        # Create the plain-text and HTML version of your message
+                        text = """\
+
+                        Hi User, 
+
+                        New dMRI images have been uploaded!
+
+                        Please see the imaging biomarker report in the attached PDF.
+
+                        For more details, please visit our webiste: https://medx.digitalworlds.ufl.edu/AIDP/
+
+                        """
+                        html = """\
+                        <html>
+                        <body>
+                            <p style="font-family:Verdana;background-color:rgb(255, 255, 237);font-size:100%;">Hi {name},
+                                <br>
+                                <br>New dMRI images have been uploaded!
+                                <br>
+                                <br>Please see the biomarker report for patient -{ID} as attached.<br>
+                                <br>
+                                For more information, please visit the webiste: 
+                                <a href="https://medx.digitalworlds.ufl.edu/AIDP/"> AIDP Portal </a> 
+                                <br>
+                                <br>
+                                <br>Thank you,
+                                <br> 
+                                <br>Automated Imaging Differentiation of Parkinsonism (AIDP) Team
+                                <br>
+                                <br>-------
+                                <br>Questions?
+                                <br>Contact- Wei-en Wang, weienwang@ufl.edu 
+
+
+                            </p>
+                        </body>
+                        </html>
+                        """
+                        html=html.format(name=name, ID=ID)
+
+                        # Turn these into plain/html MIMEText objects
+                        part1 = MIMEText(text, "plain")
+                        part2 = MIMEText(html, "html")
+
+                        # Add HTML/plain-text parts to MIMEMultipart message
+                        # The email client will try to render the last part first
+                        message.attach(part1)
+                        message.attach(part2)
+
+                        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+                            server.login(sender_email, password)
+                            server.sendmail(
+                                sender_email, email, message.as_string()
+                            )
+        
+                            server.quit()
+        else:
+            print('Did not send report emails')
+
+
 class TrainingEngine(Engine):
     """Defines tasks that will be completed as part of the training workflow"""
     def start(self, model_key = datetime.datetime.now().strftime("%Y-%m-%d-%H%M%S%f")):
@@ -438,6 +556,9 @@ class TrainingEngine(Engine):
         pass
     def generate_diagnosis(self):
         pass 
+    def send_report(self, switch): 
+        pass
+
 
 
 def getEngine(key, model_data):

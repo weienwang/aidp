@@ -34,6 +34,7 @@ def main():
     engine.generate_diagnosis(model_key=args.model_key)
     engine.bar_chart()
     engine.pdf_report()
+    engine.send_report('1')
     logger.info("Ending AIDP Application")
 
 
