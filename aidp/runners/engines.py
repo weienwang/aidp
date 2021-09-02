@@ -498,9 +498,9 @@ class PredictionEngine(Engine):
                                 <br>
                                 <br>New dMRI images have been uploaded!
                                 <br>
-                                <br>Please see the biomarker report for patient -{ID} as attached.<br>
+                                <br>Please see the biomarker report for patient ID {ID} as attached.<br>
                                 <br>
-                                For more information, please visit the webiste: 
+                                For more information, please visit the website: 
                                 <a href="https://medx.digitalworlds.ufl.edu/AIDP/"> AIDP Portal </a> 
                                 <br>
                                 <br>
