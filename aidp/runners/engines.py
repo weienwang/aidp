@@ -50,30 +50,35 @@ class PredictionEngine(Engine):
 
             results = experiment.get_results()
             self.model_data.add_results(results)
-        self.model_data.write_output_file()
+            self.model_data.write_output_file()
 
-    def generate_report(self, model_key='default'):        
+    def generate_report(self):        
         # get the clinical data and diffusion data
         # need to generate subject-based report
-        parent_path=str(pathlib.Path(__file__).parent.parent.parent)
+        parent_path=str(pathlib.Path(__file__).parent.parent.parent) 
         new_filename = '%s_out.xlsx' %os.path.splitext(os.path.basename(self.model_data.filename))[-2]
-        title_name=os.path.splitext(os.path.basename(self.model_data.filename))[-2]
-        in_table = pd.read_excel(parent_path + '/' + new_filename).drop('Unnamed: 0',axis=1)
-        df1 =in_table.loc[:, 'both_park_v_control (PD/MSA/PSP Probability)':'clinical_psp_v_msa (PSP Probability)']
-        df2=df1.transpose()
-        df2['Matrics'] = df2.index
-        df2 = df2.reset_index(drop=True)
-        df2_new = df2.rename(columns={0: 'Value'})
-        df2_new.plot.bar(x="Matrics", y = "Value",title=title_name)
-        output_dir = parent_path + '/output/'
-        filepath= output_dir + str(title_name) + '_Predict_result.png'
-        plt.savefig(filepath , bbox_inches='tight') 
-        plt.clf()
-        plt.close('all')
+        output_model_data = pd.read_excel(parent_path + '/' + new_filename).drop('Unnamed: 0',axis=1)
+        output_dir=parent_path + '/output/'
+        subject_ID_list=output_model_data['Subject']
+       
+
+        for s in subject_ID_list:
+            sub_data=output_model_data.loc[output_model_data['Subject'] == s]
+            df1 =sub_data.loc[:,'both_park_v_control (PD/MSA/PSP Probability)':'clinical_psp_v_msa (PSP Probability)']
+            df2=df1.transpose()
+            df2['Matrics'] = df2.index
+            df2.columns = ['Value', 'Matrics']
+            df2 = df2.reset_index(drop=True)
+            title_name =s+'_Diagnosis_probability'
+            df2.plot.bar(x="Matrics", y = "Value",title=s+'_Diagnosis_probability')
+            filepath= output_dir + str(title_name) + '.png'
+            plt.savefig(filepath , bbox_inches='tight') 
+            plt.clf()
+            plt.close('all')
 
     # does not matter what kind of experiments you perform..    
     
-    def generate_diagnosis(self, model_key='default'):        
+    def generate_diagnosis(self):        
         # get the clinical data and diffusion data
         # need to generate subject-based report
         parent_path=str(pathlib.Path(__file__).parent.parent.parent) 
@@ -89,18 +94,36 @@ class PredictionEngine(Engine):
             # for PD
             sub_data=output_model_data.loc[output_model_data['Subject'] == s]
 
+            # # Diagnosis Algorithm Version 1 
+            # if sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] < 0.5 :
+            #     predicted_dignosis.append('Not Parkinsonism')
+            # elif sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] >= 0.5 and sub_data['dmri_msa_psp_v_pd (MSA/PSP Probability)'].iloc[0] < 0.5 and sub_data['dmri_psp_v_msa (PSP Probability)'].iloc[0] < 0.5 :
+            #     predicted_dignosis.append('PD')
+            # elif sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] >= 0.5 and sub_data['dmri_msa_psp_v_pd (MSA/PSP Probability)'].iloc[0] >= 0.5 and sub_data['dmri_psp_v_msa (PSP Probability)'].iloc[0] < 0.5 :
+            #     predicted_dignosis.append('MSA')
+            # elif sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] >= 0.5 and sub_data['dmri_msa_psp_v_pd (MSA/PSP Probability)'].iloc[0] >= 0.5 and sub_data['dmri_psp_v_msa (PSP Probability)'].iloc[0] >= 0.5 :
+            #     predicted_dignosis.append('PSP')
+            # elif sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] >= 0.5 and sub_data['dmri_msa_psp_v_pd (MSA/PSP Probability)'].iloc[0] < 0.5 and sub_data['dmri_psp_v_pd_msa (PSP Probability)'].iloc[0] >= 0.5 or sub_data['dmri_psp_v_msa (PSP Probability)'].iloc[0] >= 0.5 :
+            #     predicted_dignosis.append('PSP')
+            # else:
+            #     predicted_dignosis.append('Unknown')
+
+            # Diagnosis Algorithm Version 2
             if sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] < 0.5 :
                 predicted_dignosis.append('Not Parkinsonism')
-            elif sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] > 0.5 and sub_data['dmri_msa_psp_v_pd (MSA/PSP Probability)'].iloc[0] < 0.5 and sub_data['dmri_psp_v_msa (PSP Probability)'].iloc[0] < 0.5 :
+            elif sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] >= 0.5 and sub_data['dmri_msa_psp_v_pd (MSA/PSP Probability)'].iloc[0] < 0.08 and sub_data['dmri_psp_v_pd_msa (PSP Probability)'].iloc[0] < 0.04 and sub_data['dmri_psp_v_msa (PSP Probability)'].iloc[0] < 0.5 :
                 predicted_dignosis.append('PD')
-            elif sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] > 0.5 and sub_data['dmri_msa_psp_v_pd (MSA/PSP Probability)'].iloc[0] > 0.5 and sub_data['dmri_psp_v_msa (PSP Probability)'].iloc[0] < 0.5 :
+            elif sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] >= 0.5 and sub_data['dmri_psp_v_pd_msa (PSP Probability)'].iloc[0] >= 0.3 or sub_data['dmri_psp_v_msa (PSP Probability)'].iloc[0] >= 0.3 :
+                predicted_dignosis.append('PSP')
+            elif sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] >= 0.5 and sub_data['dmri_psp_v_pd_msa (PSP Probability)'].iloc[0] < 0.5 and sub_data['dmri_psp_v_msa (PSP Probability)'].iloc[0] < 0.5 :
                 predicted_dignosis.append('MSA')
-            elif sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] > 0.5 and sub_data['dmri_msa_psp_v_pd (MSA/PSP Probability)'].iloc[0] > 0.5 and sub_data['dmri_psp_v_msa (PSP Probability)'].iloc[0] > 0.5 :
+            elif sub_data['both_park_v_control (PD/MSA/PSP Probability)'].iloc[0] >= 0.5 and sub_data['dmri_msa_psp_v_pd (MSA/PSP Probability)'].iloc[0] < 0.5 and sub_data['dmri_psp_v_pd_msa (PSP Probability)'].iloc[0] >= 0.5 or sub_data['dmri_psp_v_msa (PSP Probability)'].iloc[0] >= 0.5 :
                 predicted_dignosis.append('PSP')
             else:
                 predicted_dignosis.append('Unknown')
 
 
+        
         output_model_data['Predicted_diagnosis'] = predicted_dignosis
         filepath=parent_path + '/' + new_filename
         output_model_data.to_excel(filepath)
@@ -313,6 +336,7 @@ class PredictionEngine(Engine):
 
             Sex=sub_data['Sex'].iloc[0]
             predicted_diagnosis=sub_data['Predicted_diagnosis'].iloc[0]
+            MSA_PSP_Pro=sub_data['dmri_msa_psp_v_pd (MSA/PSP Probability)'].iloc[0]
 
             if Sex == 0:
                 Sex_interp = 'Male'
@@ -333,7 +357,7 @@ class PredictionEngine(Engine):
             # select differnet report layout for different diagnosis
 
 
-            if predicted_diagnosis == 'PSP' or predicted_diagnosis == 'MSA':
+            if MSA_PSP_Pro >= 0.5 and (predicted_diagnosis == 'PSP' or predicted_diagnosis == 'MSA'):
                 
                 #pdf.image(template_dir+"template_v2-600.png",x = 0, y = 0, w = 215.9, h = 279.4)
                 pdf.image(template_dir+"template-150_v3.png",x = 0, y = 0, w = 215.9, h = 279.4)
@@ -369,6 +393,44 @@ class PredictionEngine(Engine):
 
                 file_name=output_dir + str(ID) + '_Imaging_Report.pdf'
                 pdf.output(file_name, 'F')
+            
+            elif predicted_diagnosis == 'PSP' and MSA_PSP_Pro < 0.5 :
+                
+                #pdf.image(template_dir+"template_v2-600.png",x = 0, y = 0, w = 215.9, h = 279.4)
+                pdf.image(template_dir+"template-150_v3_PSP.png",x = 0, y = 0, w = 215.9, h = 279.4)
+
+
+                pdf.set_xy(82, 30)
+                pdf.cell(25, 30, ID)
+
+                pdf.set_xy(82, 43)
+                date_output=datetime.datetime.now().strftime("%m-%d-%Y")
+                pdf.cell(25, 30, date_output)
+
+
+                clinical='Age: '+str(Age) + '   Sex: '+ str(Sex_interp) + '   UPDRS: ' + str(UPDRS)
+                pdf.set_xy(82, 56)
+                pdf.cell(25, 30, clinical)
+
+                filepath = output_dir + str(ID) + str('_PD · MSA · PSPvsControl_prob.png')
+                pdf.image(filepath,x = 145, y = 80.71, w =68.069, h = 51.052)
+
+                filepath = output_dir + str(ID) +  str('_PSPvsPD · MSA_prob.png')
+                pdf.image(filepath,x = 145, y = 112.71, w = 68.069, h =51.052)        
+
+                filepath = output_dir + str(ID) + str('_MSAvsPSP_prob.png')
+                pdf.image(filepath,x = 145, y = 144.71 , w = 68.069, h =51.052)
+
+
+                filepath = output_dir + str(ID) + str('_FW_barplot.png')
+                pdf.image(filepath,x = 15.25, y = 215.4 , w = 111.040, h = 55.728)
+
+                pdf.set_xy(88, 172)
+                pdf.cell(25, 30, predicted_diagnosis)
+
+                file_name=output_dir + str(ID) + '_Imaging_Report.pdf'
+                pdf.output(file_name, 'F')
+
 
             elif predicted_diagnosis == 'PD':
 
@@ -546,7 +608,7 @@ class TrainingEngine(Engine):
             self._logger.info("Starting training experiment: %s", experiment)
             experiment.train(self.model_data.data, model_key)
             self._logger.debug("Finished training experiment: %s", experiment)
-    def generate_report(self,model_key='default'):
+    def generate_report(self):
         pass
     def donut_chart(self, test_prob, circle_title_1, circle_title_2, switch):
         pass

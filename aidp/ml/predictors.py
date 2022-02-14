@@ -76,7 +76,7 @@ class LinearSvcPredictor(Predictor):
             ('classifier', SVC(kernel='linear', class_weight='balanced', probability=True))
         ])
 
-        self.cv=5
+        self.cv=5 # weien change to 10 (original = 5)
         self.test_size=0.20
         self.scoring_list={
             'recall':make_scorer(recall_score),

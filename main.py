@@ -27,14 +27,15 @@ def main():
     # Get prediction/training engine
     engine = getEngine(args.cmd, model_data)
     engine.start(model_key=args.model_key)
-    engine.generate_report(model_key=args.model_key) # a bar graph with all the probablity 
-    engine.donut_chart('both_park_v_control (PD/MSA/PSP Probability)', 'PD · MSA · PSP', 'Control', 'Match')
-    engine.donut_chart('dmri_msa_psp_v_pd (MSA/PSP Probability)', 'PD', 'MSA · PSP','unmatch')
-    engine.donut_chart('dmri_psp_v_msa (PSP Probability)','MSA', 'PSP','unmatch')
-    engine.generate_diagnosis(model_key=args.model_key)
-    engine.bar_chart()
-    engine.pdf_report()
-    engine.send_report('1')
+    #engine.generate_report() # a bar graph with all the probablity 
+    #engine.donut_chart('both_park_v_control (PD/MSA/PSP Probability)', 'PD · MSA · PSP', 'Control', 'Match')
+    #engine.donut_chart('dmri_msa_psp_v_pd (MSA/PSP Probability)', 'PD', 'MSA · PSP','unmatch')
+    #engine.donut_chart('dmri_psp_v_msa (PSP Probability)','MSA', 'PSP','unmatch')
+    #engine.donut_chart('dmri_psp_v_pd_msa (PSP Probability)','PSP', 'PD · MSA','Match')
+    engine.generate_diagnosis()
+    #engine.bar_chart()
+    #engine.pdf_report()
+    #engine.send_report('0')
     logger.info("Ending AIDP Application")
 
 

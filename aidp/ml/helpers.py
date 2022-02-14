@@ -260,6 +260,7 @@ def grid_search_optimization(pipeline, parameters_to_tune, X, y, Xh, yh, cv=5, s
     """ Performs a grid-search optimization with cross validation with the provided hyperparameters
     and outputs a report
     
+    
     Arguments:
         pipeline {sklearn pipeline} -- unfitted pipeline of transformations and estimator
         parameters_to_tune {dict(named parameter(str) -> array-like (any))} -- a dictionary that maps a 
